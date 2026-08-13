@@ -16,17 +16,23 @@ i didnt really check because i prefer to have them all in one folder so i downlo
 
 if you want to get them locally
 
-> ``` git clone https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2 [DESTINATIO_FOLDER] ```
+```
+git clone https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2 [DESTINATIO_FOLDER]
+```
 
-> ``` git clone https://huggingface.co/Systran/faster-whisper-small.en [DESTINATIO_FOLDER] ```
+```
+git clone https://huggingface.co/Systran/faster-whisper-small.en [DESTINATIO_FOLDER]
+```
 
 they are the repos i use to pull the models from
 to run the script you simply ``cd`` into the project 
 
 and run 
-> ``` uv run subgen.py <destination>```
+```
+uv run subgen.py <destination>
+```
 
-destination is where your videos live and you aim to generate subs for them
+``<destination>``  is where your videos live and you aim to generate subs for them
 
 the normal ``subgen.py`` uses **"turbo"** model
 if you want a lighter model i use **"small-en"**
@@ -38,7 +44,9 @@ generally **turbo** is very efficient and fast and accurate but still heavier
 
 **small-en** is very light. i also used to generate subs on **small-en** and **base-en** on CPU before. thats an overkill i would not recommend it unless you have to because i couldnt get the cuda work i used CPU but current script will load the needed cuda files after you run the python script (and uv automatically fetches and downloads the dependencies)
 
-> ``` uv run subgen-small-en.py <destination>```
+```
+uv run subgen-small-en.py <destination>
+```
 
 the only differences is really the model used, i made them separate so i can simply switch in the terminal with whichever model i want but keep in mind that the not specified py file is **turbo** model
 
