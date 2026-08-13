@@ -21,6 +21,13 @@ from faster_whisper import WhisperModel
 from huggingface_hub import snapshot_download
 from tqdm import tqdm
 
+# ANSI Escape Sequences for Terminal Colors
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
+
 # OpenAI Whisper model preset mappings
 PRESETS = {
     # English-only Models
@@ -170,11 +177,12 @@ def prompt_directory_interactive(default_dir: str) -> str:
     """Prompts for target video directory, validates existence, and ensures video files are present."""
     video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
 
-    while True:
-        print("\n📂 Target Video Directory:")
-        print(f"   Current default: {Path(default_dir).resolve()}")
+    print("\n📂 Target Video Directory:")
+    print(f"   Current default: {Path(default_dir).resolve()}")
 
-        user_input = input(f"Enter target directory path [default: '{default_dir}']: ").strip()
+    while True:
+
+        user_input = input(f"\nEnter target directory path [default: '{default_dir}']: ").strip()
 
         # Handle default choice (empty input) vs user input
         raw_path = default_dir if not user_input else user_input.strip("'\"")
@@ -182,7 +190,7 @@ def prompt_directory_interactive(default_dir: str) -> str:
 
         # 1. Validate directory existence
         if not target_path.is_dir():
-            print(f"❌ Error: Directory '{target_path}' does not exist. Please try again.")
+            print(f"\n{RED}❌ Error: Directory '{target_path}' does not exist. Please try again.{RESET}")
             continue
 
         # 2. Validate video file presence
@@ -192,8 +200,8 @@ def prompt_directory_interactive(default_dir: str) -> str:
         ]
 
         if not videos:
-            print(f"⚠️ Warning: No video files (.mp4, .mkv, .avi, .mov, .webm) found in '{target_path.resolve()}'.")
-            print("   Please enter a directory that contains supported video files.")
+            print(f"\n{YELLOW}⚠️ Warning: No video files (.mp4, .mkv, .avi, .mov, .webm) found in '{target_path.resolve()}'.{RESET}")
+            print(f"{YELLOW}   Please enter a directory that contains supported video files.{RESET}")
             continue
 
         return str(raw_path)
@@ -201,9 +209,9 @@ def prompt_directory_interactive(default_dir: str) -> str:
 
 def prompt_language_and_task_interactive():
     """Prompts for English selection, and handles translate vs transcribe for non-English."""
+    print("\n🌐 Is the audio language English?")
     while True:
-        print("\n🌐 Is the audio language English?")
-        is_eng_input = input("Enter [Y/n] (default: Y): ").strip().lower()
+        is_eng_input = input("\nEnter [Y/n] (default: Y): ").strip().lower()
 
         if not is_eng_input or is_eng_input == 'y':
             is_english = True
@@ -212,17 +220,19 @@ def prompt_language_and_task_interactive():
             is_english = False
             break
         else:
-            print("❌ Invalid input. Please enter 'Y' for Yes or 'n' for No.")
+            print(f"\n{RED}❌ Invalid input. Please enter 'Y' for Yes or 'n' for No.{RESET}")
 
     if is_english:
         return True, "en", "transcribe"
     else:
-        while True:
-            print("\n🗣️  Choose operation for non-English audio:")
-            print("  [1] Transcribe (Generate SRT in the original language)")
-            print("  [2] Translate (Translate from original language to English SRT)")
 
-            task_input = input("Enter choice [1/2] (default: 1): ").strip()
+        print("\n-------------------------------------------------")
+        print("\n🗣️  Choose operation for non-English audio:")
+        print("  [1] Transcribe (Generate SRT in the original language)")
+        print("  [2] Translate (Translate from original language to English SRT)")
+
+        while True:
+            task_input = input("\nEnter choice [1/2] (default: 1): ").strip()
 
             if not task_input or task_input == "1":
                 task = "transcribe"
@@ -231,13 +241,14 @@ def prompt_language_and_task_interactive():
                 task = "translate"
                 break
             else:
-                print("❌ Invalid choice. Please enter '1' or '2'.")
+                print(f"\n{RED}❌ Invalid choice. Please enter '1' or '2'.{RESET}")
+
+        print("\n-------------------------------------------------")
+        print("\n🌍 Source Language Code:")
+        print("   Examples: 'fa' (Persian), 'es' (Spanish), 'auto' (Auto-detect)")
 
         while True:
-            print("\n🌍 Source Language Code:")
-            print("   Examples: 'fa' (Persian), 'es' (Spanish), 'auto' (Auto-detect)")
-
-            lang_input = input("Enter ISO language code [default: 'auto']: ").strip().lower()
+            lang_input = input("\nEnter ISO language code [default: 'auto']: ").strip().lower()
 
             if not lang_input:
                 lang = "auto"
@@ -246,7 +257,7 @@ def prompt_language_and_task_interactive():
                 lang = lang_input
                 break
             else:
-                print("❌ Invalid format. Please enter a valid text ISO code or 'auto'.")
+                print(f"\n{RED}❌ Invalid format. Please enter a valid text ISO code or 'auto'.{RESET}")
 
         return False, lang, task
 
@@ -271,11 +282,11 @@ def prompt_model_interactive(is_english: bool, task: str = "transcribe", default
             default_model = "base.en" if is_english else "base"
 
     print("\n🤖 Choose an OpenAI Whisper model preset:")
-    print("------------------------------------------------------------------")
+    print("---------------------------------------------")
     for idx, key in enumerate(options, 1):
         preset = PRESETS[key]
         print(f"  [{idx:2d}] {key:<10} -> {preset['label']}")
-    print("------------------------------------------------------------------")
+    print("---------------------------------------------")
 
     while True:
         selection = input(f"\nEnter number or model key (default: [{default_model}]): ").strip()
@@ -293,7 +304,7 @@ def prompt_model_interactive(is_english: bool, task: str = "transcribe", default
 
         # Explicit feedback if user tries to manually force 'turbo' on a translation task
         if resolved_key in ["turbo", "large-v3-turbo"] and task == "translate":
-            print("❌ Whisper Turbo does not support translation tasks. Please select a multilingual model.")
+            print(f"\n{RED}❌ Whisper Turbo does not support translation tasks. Please select a multilingual model.{RESET}")
             continue
 
         # Handle numeric index input
@@ -302,9 +313,9 @@ def prompt_model_interactive(is_english: bool, task: str = "transcribe", default
             if 0 <= choice_idx < len(options):
                 return options[choice_idx]
             else:
-                print(f"❌ Number out of range. Please enter 1-{len(options)}.")
+                print(f"\n{RED}❌ Number out of range. Please enter 1-{len(options)}.{RESET}")
         except ValueError:
-            print("❌ Invalid input. Please enter a valid menu number or model key.")
+            print(f"\n{RED}❌ Invalid input. Please enter a valid menu number or model key.{RESET}")
 
 
 def prompt_device_interactive(default_device: str = "cuda") -> str:
@@ -324,7 +335,7 @@ def prompt_device_interactive(default_device: str = "cuda") -> str:
         elif selection in ["2", "cpu"]:
             return "cpu"
         else:
-            print("❌ Invalid choice. Please enter '1' for cuda or '2' for cpu.")
+            print(f"\n{RED}❌ Invalid choice. Please enter '1' for cuda or '2' for cpu.{RESET}")
 
 
 def prompt_compute_type_interactive(default_compute: str = "int8") -> str:
@@ -332,10 +343,10 @@ def prompt_compute_type_interactive(default_compute: str = "int8") -> str:
     valid_computes = ["int8", "float16", "int8_float16", "float32"]
 
     print("\n⚙️  CTranslate2 Compute Type:")
-    print(f"  Options: {', '.join(valid_computes)}")
+    print(f"   Options: {', '.join(valid_computes)}")
 
     while True:
-        user_input = input(f"Enter compute precision type [default: '{default_compute}']: ").strip()
+        user_input = input(f"\nEnter compute precision type [default: '{default_compute}']: ").strip()
 
         if not user_input:
             return default_compute
@@ -343,7 +354,7 @@ def prompt_compute_type_interactive(default_compute: str = "int8") -> str:
         if user_input in valid_computes:
             return user_input
         else:
-            print(f"❌ Invalid compute type. Please choose exactly from: {', '.join(valid_computes)}")
+            print(f"\n{RED}❌ Invalid compute type. Please choose exactly from: {', '.join(valid_computes)}{RESET}")
 
 
 def prompt_cooldown_interactive(default_cooldown: int | None) -> int | None:
@@ -354,7 +365,7 @@ def prompt_cooldown_interactive(default_cooldown: int | None) -> int | None:
     print("  Enter base cooldown in seconds (or press Enter to use model defaults)")
 
     while True:
-        user_input = input(f"Enter cooldown seconds [default: {default_str}]: ").strip()
+        user_input = input(f"\nEnter cooldown seconds [default: {default_str}]: ").strip()
 
         if not user_input:
             return default_cooldown
@@ -364,9 +375,9 @@ def prompt_cooldown_interactive(default_cooldown: int | None) -> int | None:
             if val >= 0:
                 return val
             else:
-                print("❌ Cooldown cannot be negative. Please enter a valid number.")
+                print(f"\n{RED}❌ Cooldown cannot be negative. Please enter a valid number.{RESET}")
         except ValueError:
-            print("❌ Invalid input. Please enter a valid integer.")
+            print(f"\n{RED}❌ Invalid input. Please enter a valid integer.{RESET}")
 
 
 # --- PARSER AND MAIN execution ---
@@ -434,19 +445,19 @@ def get_hf_model(repo_id: str) -> str:
     print(f"📥 Checking Hugging Face Hub for '{repo_id}'...")
     try:
         model_path = snapshot_download(repo_id=repo_id)
-        print("✅ Download/verification complete!")
-        print(f"📍 Cached location: {model_path}\n")
+        print(f"\n{GREEN}✅ Download/verification complete!{RESET}")
+        print(f"{GREEN}📍 Cached location: {model_path}{RESET}\n")
         return model_path
     except Exception as err:
-        print(f"⚠️ Could not reach Hugging Face Hub ({err}).")
-        print("🔄 Falling back to local offline cache...")
+        print(f"\n{YELLOW}⚠️ Could not reach Hugging Face Hub ({err}).{RESET}")
+        print(f"{YELLOW}🔄 Falling back to local offline cache...{RESET}")
         try:
             model_path = snapshot_download(repo_id=repo_id, local_files_only=True)
-            print("✅ Loaded from local cache (offline mode)!")
-            print(f"📍 Cached location: {model_path}\n")
+            print(f"\n{GREEN}✅ Loaded from local cache (offline mode)!{RESET}")
+            print(f"{GREEN}📍 Cached location: {model_path}{RESET}\n")
             return model_path
         except Exception as cache_err:
-            print(f"❌ Failed to load model offline. Model is not cached locally: {cache_err}")
+            print(f"\n{RED}❌ Failed to load model offline. Model is not cached locally: {cache_err}{RESET}")
             sys.exit(1)
 
 
@@ -464,7 +475,7 @@ def resolve_model_and_cooldown(model_arg: str, cooldown_arg: int | None, script_
             print(f"⏳ Loading local {preset['label']} model from project directory: '{local_path}'...")
         else:
             repo_id = preset["fallback"]
-            print(f"⚠️ Project model directory '{local_path}' not found.")
+            print(f"{YELLOW}⚠️ Project model directory '{local_path}' not found.{RESET}")
             model_path = get_hf_model(repo_id)
     else:
         cooldown = cooldown_arg if cooldown_arg is not None else 10
@@ -486,7 +497,7 @@ def main():
     if not args.interactive:
         # 1. CLI Turbo + Translate Conflict Check -> Prompt user for selection
         if args.task == "translate" and args.model in ["turbo", "large-v3-turbo"]:
-            print("\n⚠️  Warning: Whisper 'turbo' does not support translation tasks.")
+            print(f"\n{YELLOW}⚠️  Warning: Whisper 'turbo' does not support translation tasks.{RESET}")
             print("Please choose a compatible multilingual model:")
 
             is_eng = (args.language == "en")
@@ -499,7 +510,7 @@ def main():
         # 2. Language + '.en' model mismatch check
         if args.language not in ["en", "auto"] and args.model.endswith(".en"):
             new_model = args.model.removesuffix(".en")
-            print(f"\n⚠️  Warning: Non-English language '{args.language}' requested with English-only model '{args.model}'.")
+            print(f"\n{YELLOW}⚠️  Warning: Non-English language '{args.language}' requested with English-only model '{args.model}'.{RESET}")
             print(f"🔄 Automatically swapping to multilingual model '{new_model}'.\n")
             args.model = new_model
 
@@ -513,12 +524,16 @@ def main():
 
     # Step-by-step interactive workflow when -i flag is set
     if args.interactive:
-        print("\n🎛️  -- Interactive Configuration Mode --")
+        print("\n====================================================")
+        print("       🎛️ Interactive Configuration Mode ")
+        print("====================================================")
 
         # Will loop internally until a valid directory WITH video files is selected
         target_dir = prompt_directory_interactive(target_dir)
 
+        print("\n====================================================")
         is_english, selected_lang, selected_task = prompt_language_and_task_interactive()
+        print("\n====================================================")
 
         # Passes task to enforce disabling Turbo for translation
         selected_model = prompt_model_interactive(
@@ -527,16 +542,19 @@ def main():
             default_model=selected_model
         )
 
+        print("\n====================================================")
         selected_device = prompt_device_interactive(selected_device)
+        print("\n====================================================")
         selected_compute = prompt_compute_type_interactive(selected_compute)
+        print("\n====================================================")
         selected_cooldown = prompt_cooldown_interactive(selected_cooldown)
-        print("------------------------------------------------------------------\n")
+        print("\n====================================================\n")
 
     folder_path = Path(target_dir)
 
     # Secondary check for non-interactive execution mode
     if not folder_path.is_dir():
-        print(f"❌ Error: '{target_dir}' is not a valid directory.")
+        print(f"{RED}❌ Error: '{target_dir}' is not a valid directory.{RESET}")
         sys.exit(1)
 
     video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
@@ -547,7 +565,7 @@ def main():
     ]
 
     if not videos:
-        print(f"⚠️ No video files found in {folder_path.resolve()}")
+        print(f"{YELLOW}⚠️ No video files found in {folder_path.resolve()}{RESET}")
         sys.exit(0)
 
     print(f"📂 Found {len(videos)} video(s) in {folder_path.resolve()}")
@@ -560,7 +578,7 @@ def main():
 
     print(f"🚀 Initializing WhisperModel on device='{selected_device}' (compute_type='{selected_compute}')...")
     model = WhisperModel(model_path, device=selected_device, compute_type=selected_compute)
-    print("✅ Model loaded successfully into memory.\n")
+    print(f"{GREEN}✅ Model loaded successfully into memory.{RESET}\n")
 
     unprocessed_videos = [v for v in videos if not v.with_suffix(".srt").exists()]
     total_to_process = len(unprocessed_videos)
@@ -593,10 +611,10 @@ def main():
 
             # Runtime Check: Warn if auto-detected non-English on an English-only model
             if selected_model.endswith(".en") and info.language != "en":
-                print(f"⚠️  Warning: Auto-detected language '{info.language}' (p={info.language_probability:.2f}), "
-                      f"but using English-only model '{selected_model}'.")
-                print("   Subtitles may contain gibberish or incorrect transcriptions. "
-                      "Consider using a multilingual model (e.g., 'small' or 'turbo').")
+                print(f"{YELLOW}⚠️  Warning: Auto-detected language '{info.language}' (p={info.language_probability:.2f}), "
+                      f"but using English-only model '{selected_model}'.{RESET}")
+                print(f"{YELLOW}   Subtitles may contain gibberish or incorrect transcriptions. "
+                      f"Consider using a multilingual model (e.g., 'small' or 'turbo').{RESET}")
 
             raw_duration = getattr(info, 'duration', 0)
             total_seconds = max(round(raw_duration, 2), 0.1)
@@ -651,27 +669,27 @@ def main():
             effective_cooldown = calculate_dynamic_cooldown(cooldown, total_seconds)
 
             if effective_cooldown > 0 and not is_last_video:
-                print(f"🌡️ Cooling down for {effective_cooldown}s")
+                print(f"{BLUE}🌡️ Cooling down for {effective_cooldown}s{RESET}")
                 time.sleep(effective_cooldown)
                 print()
 
         except KeyboardInterrupt:
-            print(f"\n🛑 Interrupted by user while processing '{video_path.name}'.")
+            print(f"{RED}🛑 Interrupted by user while processing '{video_path.name}'.{RESET}")
             sys.exit(130)
         except Exception as e:
             failed_count += 1
-            print(f"❌ Failed to process '{video_path.name}': {e}\n")
+            print(f"{RED}❌ Failed to process '{video_path.name}': {e}{RESET}\n")
         finally:
             if not success:
                 srt_path.unlink(missing_ok=True)
 
     if failed_count == 0:
-        print(f"🎉 All videos processed successfully! ({processed_count} videos)")
+        print(f"{GREEN}🎉 All videos processed successfully! ({processed_count} videos){RESET}")
     else:
         print(
-            f"⚠️ Processing finished: "
+            f"{YELLOW}⚠️ Processing finished: "
             f"{processed_count - failed_count} succeeded, "
-            f"{failed_count} failed."
+            f"{failed_count} failed.{RESET}"
         )
 
 
