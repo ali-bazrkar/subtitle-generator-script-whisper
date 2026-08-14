@@ -1,59 +1,134 @@
 # subtitle-generator-script-whisper
-its a small script i have vibe coded for generating subtitle for videos i download online
-it uses whisper models to generate subs
+this repo contains a small vibe coded script for generating subtitles for videos i download across the internet.
+this was meant to remain a one-time script for my own personal uses however i decided to upload it here so i could access it anytime on any device later and also share it with my friends when needed. i added interactive mode and i probably will continue polishing it over time if anything interesting seemed to be needed to be added
 
-you probably would want to use UV just like i did or simply download the dependencies manually from the .py files using pip if you specifically dont want to use uv.
+## try-out:
 
-another thing you might want to do is to use a Virtual environment (``` uv env ```) before running anything so when you run the scripts all dependencies will stay within your project folder but thats really up to you.
-
-the script is simple, loads the mode, finds the cuda related files, and looks for video formats inside the directory you pass to it.
-if you want you could use CPU mode, simply change the line ``` model = WhisperModel(model_path, device="cuda", compute_type="int8") ```
-device to ```"cpu"``` instead of ```"cuda"```. also ```compute_type``` can be changed too. the higher it is the more accurate it works but also uses more resources and probably more heat. depends on the code but my gpu only supported int8 so i kept it as is. 
-
-the ```model_path``` is pointing to the local folder (in models) where i keep my downloaded models locally there. you can download them too if you want, as many as you wish
-if you have not downloaded it yourself, the script will point to the appropriate HF repo and it will be downloaded as you just run the script but it probably will be stored where uv / whisper decides to keep it
-i didnt really check because i prefer to have them all in one folder so i download/clone them manually and just point to them so i know where everything related to my project lives.
-
-if you want to get them locally
-
+### using UV:
+clone the repository and type:
 ```
-git clone https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2 [DESTINATIO_FOLDER]
+uv run subgen.py -i
 ```
+the ``-i`` flag will take you to the interactive mode where you exactly choose what you intend to do step by step.
 
+### using makefile:
+you can use the command below to use the makefile **(Linux/macOS)**:
 ```
-git clone https://huggingface.co/Systran/faster-whisper-small.en [DESTINATIO_FOLDER]
+make
 ```
-
-they are the repos i use to pull the models from
-to run the script you simply ``cd`` into the project 
-
-and run 
+or alternatively:
 ```
-uv run subgen.py <destination>
+make interactive
 ```
+both commands do equally same thing, they will first check UV's existence in your system path and if you didn't have UV installed, they would create a python VENV (Virtual Environment), install the dependencies and run the command in the interactive mode. if your system had uv it would simply run the first command above and uv will handle everything else. if you are on Windows you might wanna install UV or install the dependencies manually to run the script properly.
 
-``<destination>``  is where your videos live and you aim to generate subs for them
 
-the normal ``subgen.py`` uses **"turbo"** model
-if you want a lighter model i use **"small-en"**
-the "-en" series are specifically designed for english subtitle only.
-they have higher accuracy compared to the multilingual series so if your video contains non-english stuff you might wanna try other models 
-check the official openAI whisper repo you will see what models they offer and what the differences are there.
-
-generally **turbo** is very efficient and fast and accurate but still heavier
-
-**small-en** is very light. i also used to generate subs on **small-en** and **base-en** on CPU before. thats an overkill i would not recommend it unless you have to because i couldnt get the cuda work i used CPU but current script will load the needed cuda files after you run the python script (and uv automatically fetches and downloads the dependencies)
-
+### Running without interactive CLI:
+to run it directly from command line without interactive CLI:
 ```
-uv run subgen-small-en.py <destination>
+make help
 ```
+will give you explanations about flags you can use and use:
+```
+make run ARGS="<dir> --flag1 value1 -f2 value2"
+```
+or alternatively without make:
+```
+subgen.py [-h] [-m MODEL] [-d {cuda,cpu}] [-i] [-c COOLDOWN] [-l LANGUAGE] [-t {transcribe,translate}] [--compute-type COMPUTE_TYPE] [target_dir]
+```
+to run the program with your custom settings directly without interactive CLI
 
-the only differences is really the model used, i made them separate so i can simply switch in the terminal with whichever model i want but keep in mind that the not specified py file is **turbo** model
 
-one other thing is worth to note, after each video is generated a srt file, it will wait for a certain time:
-for turbo (main script) i set it to 20 seconds rest per video
-for small-en its 8 second. 
 
-the small-en even without the rest stabilizes around 80 C on my gpu, so the timer was not really needed
-but the turbo keeps growing hotter without the rest so its a good idea to tune it with your own GPU if needed.
-a rest in between of videos if you have lots of videos to transcribe can prevent overheating 
+## how-does-it-work?
+as mentioned under the hood it will use [faster-whisper](https://github.com/SYSTRAN/faster-whisper) models, which is a reimplementation of [Whisper models](https://github.com/openai/whisper) using CTranslate2. i never used original whisper models myself but these repackages seem to have lower binary size compared to the original models and they are faster. in terms of quality i have used turbo (on GPU), base-en and small-en (on CPU). base-en was alright, small-en had a very nice accuracy even on technical videos.
+
+#### model-details:
+for more detail check the [OG whisper](https://github.com/openai/) repo but i will shortly explain them here too anyway.
+there are two variants to these models:
+* tiny.en
+* base.en
+* small.en
+* medium.en
+
+these are English-Only models if you already know you are not gonna work on other languages these models often show better accuracy compared to their multilingual variants (large and turbo still offer better accuracy even on english since they are much larger)
+* tiny
+* base
+* small
+* medium
+* large-v1
+* large-v2
+* turbo
+* large-v3
+
+these are multilingual models, the default model used in whisper itself is **turbo** which is a more efficient and faster implementation of **large-v3**. 
+there is an important limitation you need to consider on **turbo**. basically models can do:
+- **Transcribing**
+- **Translation**
+
+transcribing works as ``Language A audio -> Language A SRT `` while translation works as ``Any Language audio -> English SRT``. it is important to keep in mind **while __turbo__ can do transcribing very well, for translation you cannot use turbo model. you have to choose other multilingual models.** and you do not want to use english-only models on non-english contents obviously :)
+
+## script-details:
+
+### Flags Involved:
+
+
+> ``-m, --model MODEL``
+
+the model name you wish to use for your task, you can also pass a custom Hugging Face path but the model there must be built using CTranslate2 
+
+
+> ``-d, --device {cuda,cpu}``
+
+preforming operation using CPU or CUDA (GPU)
+
+
+> ``-t, --task {transcribe,translate}``
+
+as discussed about, you can generate subtitles from any supported language to the same language (transcribe) or from any supported language to English (translating), translation only generates english SRT files
+
+
+> ``-l, --language LANGUAGE``
+
+use language codes like "fa" or "en", by default it will pass "auto" and check the language in runtime. if model was inappropriate for your task/language you will be offered appropriate models interactively
+
+
+> ``-t, ----compute-type COMPUTE_TYPE``
+
+``int8``, ``float16``, ``float32``, ``int8_float16`` can be selected, i personally use int8. other options may not be supported by the model or your GPU you gotta test it yourself.
+> ``-c, --cooldown COOLDOWN``
+
+my script uses **exponential backoffs**. it has a rigid system cooldown combined with dynamically scaling cooldown system. the number you enter (in seconds, say 60 seconds) will be used to give your GPU / CPU rest between each 2 video when generating subtitles. this helps to reduce heat and ensure your device won't overheat due to constantly operating on multiple video files in the same folder. your folder may contain lots of 2 minutes videos, it waits (12 seconds in our example) since the video was shorter. however any video higher than 10 minutes length will use 100% of your COOLDOWN and any small scale will at least have 5 seconds wait with respect to your choice (meaning if you explicitly enter 0 or something lower than 5, it will bypass the minimum and use your preference)
+
+
+> ``-i, --interactive ``
+
+interactive mode prepares the script for you by asking you questions, it handles errors so you would not mistype, you can always hit "enter" if you want to use default settings.
+
+
+## what-script-provides:
+
+
+✅ handles user inputs avoiding mismatches in both interactive and normal modes.
+
+✅ checks for correct path in your system and video existence in the entered path.
+
+✅ based on task/language handles appropriate models in both interactive and normal modes.
+
+✅ supports manually downloaded models in "models" folder, uses Hugging Face if needed.
+
+✅ supports cooldown for SRT Generation between two videos (with exponential back-offs).
+
+✅ offers real-time progress bar on model downloading and SRT generation using **TQDM**.
+
+✅ preloads cuda libs when running on GPU preventing errors related to missing libs.
+
+✅ provides a friendly and interactive CLI interface for users to get their works done.
+
+## screenshots:
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/135289f4-e4d0-4b16-bb0e-68b635d544eb" width="300">
+  <img src="https://github.com/user-attachments/assets/d9b84d9a-3d54-44f5-a51d-62dbaf2ecd0d" width="300">
+  <img src="https://github.com/user-attachments/assets/1bdddf9e-9599-45a6-b518-4d6ab57974ed" width="300">
+</p>
