@@ -41,7 +41,7 @@ to run the program with your custom settings directly without interactive CLI
 
 
 ## how-does-it-work?
-as mentioned under the hood it will use [faster-whisper](https://github.com/SYSTRAN/faster-whisper) models, which is a reimplementation of [Whisper models](https://github.com/openai/whisper) using CTranslate2. i never used original whisper models myself but these repackages seem to have lower binary size compared to the original models and they are faster. in terms of quality i have used turbo (on GPU), base-en and small-en (on CPU). base-en was alright, small-en had a very nice accuracy even on technical videos.
+as mentioned under the hood it will use [faster-whisper](https://github.com/SYSTRAN/faster-whisper) models, which is a reimplementation of [Whisper models](https://github.com/openai/whisper) with CTranslate2 format. i never used original whisper models myself but these repackages seem to have lower binary size compared to the original models and they are faster. in terms of quality i have used turbo (on GPU), base-en and small-en (on CPU). base-en was alright, small-en had a very nice accuracy even on technical videos.
 
 #### model-details:
 for more detail check the [OG whisper](https://github.com/openai/) repo but i will shortly explain them here too anyway.
@@ -75,7 +75,7 @@ transcribing works as ``Language A audio -> Language A SRT `` while translation 
 
 > ``-m, --model MODEL``
 
-the model name you wish to use for your task, you can also pass a custom Hugging Face path but the model there must be built using CTranslate2 
+the model name you wish to use for your task, you can also pass a custom Hugging Face path but the model there must be built with CTranslate2 format
 
 
 > ``-d, --device {cuda,cpu}``
@@ -123,7 +123,17 @@ interactive mode prepares the script for you by asking you questions, it handles
 
 ✅ preloads cuda libs when running on GPU preventing errors related to missing libs.
 
+✅ skips videos with existing SRTs and removes failed or stopped (``ctrl + C``) SRTs
+
 ✅ provides a friendly and interactive CLI interface for users to get their works done.
+
+
+## adding-manual-models
+
+by default you can pass any HF link you want as a flag in non-interactive mode. i personally want the models to be accessed in the same folder i am running the script so i can manage them better (rather than going to find them in cache folders) so i store models in the ``models`` folder in the same project directory. make a folder like ``turbo`` or any name you would like (you can look at **PRESETS**). clone the model repo and pass the folder name inside **models** folder as your model flag and the script will check your directory first. if it fails it will look for it in Hugging Face.
+
+> **Note**: If you manually download a model, make sure it is in **CTranslate2 format**. faster-whisper does not directly load the original PyTorch/Transformers model files they must first be converted to CTranslate2 format.
+
 
 ## screenshots:
 
@@ -132,3 +142,5 @@ interactive mode prepares the script for you by asking you questions, it handles
   <img src="https://github.com/user-attachments/assets/b21c232b-c25d-4159-9dfe-bd4957c71843" width="300">
   <img src="https://github.com/user-attachments/assets/c5e1c468-16bc-4060-ae61-de34d4ccb365" width="300">
 </p>
+
+these screenshots give you an overview on how the interactive mode looks like as you run it and how the script will log you information and show realtime progress on generating subtitles (3rd image)
