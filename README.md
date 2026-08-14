@@ -93,9 +93,11 @@ as discussed about, you can generate subtitles from any supported language to th
 use language codes like "fa" or "en", by default it will pass "auto" and check the language in runtime. if model was inappropriate for your task/language you will be offered appropriate models interactively
 
 
-> ``-t, ----compute-type COMPUTE_TYPE``
+> ``--compute-type COMPUTE_TYPE``
 
 ``int8``, ``float16``, ``float32``, ``int8_float16`` can be selected, i personally use int8. other options may not be supported by the model or your GPU you gotta test it yourself.
+
+
 > ``-c, --cooldown COOLDOWN``
 
 my script uses **exponential backoffs**. it has a rigid system cooldown combined with dynamically scaling cooldown system. the number you enter (in seconds, say 60 seconds) will be used to give your GPU / CPU rest between each 2 video when generating subtitles. this helps to reduce heat and ensure your device won't overheat due to constantly operating on multiple video files in the same folder. your folder may contain lots of 2 minutes videos, it waits (12 seconds in our example) since the video was shorter. however any video higher than 10 minutes length will use 100% of your COOLDOWN and any small scale will at least have 5 seconds wait with respect to your choice (meaning if you explicitly enter 0 or something lower than 5, it will bypass the minimum and use your preference)
