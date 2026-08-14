@@ -123,7 +123,7 @@ interactive mode prepares the script for you by asking you questions, it handles
 
 ✅ preloads cuda libs when running on GPU preventing errors related to missing libs.
 
-✅ skips videos with existing SRTs and removes failed or stopped (``ctrl + C``) SRTs
+✅ skips videos with existing SRTs and auto removes failed or stopped (``ctrl + C``) SRTs
 
 ✅ provides a friendly and interactive CLI interface for users to get their works done.
 
