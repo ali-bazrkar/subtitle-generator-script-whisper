@@ -3,7 +3,7 @@ VENV_DIR := .venv
 PYTHON := $(VENV_DIR)/bin/python
 PIP := $(VENV_DIR)/bin/pip
 
-DEPS := faster-whisper huggingface-hub tqdm nvidia-cublas-cu12 nvidia-cudnn-cu12
+DEPS := faster-whisper huggingface-hub tqdm nvidia-cublas-cu12 nvidia-cudnn-cu12 prompt-toolkit
 
 UV_PATH := $(shell command -v uv 2>/dev/null)
 

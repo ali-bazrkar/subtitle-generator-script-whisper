@@ -6,6 +6,7 @@
 #     "tqdm",
 #     "nvidia-cublas-cu12",
 #     "nvidia-cudnn-cu12",
+#     "prompt-toolkit",
 # ]
 # ///
 
@@ -20,6 +21,8 @@ from pathlib import Path
 from faster_whisper import WhisperModel
 from huggingface_hub import snapshot_download
 from tqdm import tqdm
+
+from prompt_toolkit import prompt
 
 # ANSI Escape Sequences for Terminal Colors
 RED = "\033[91m"
@@ -194,7 +197,7 @@ def prompt_directory_interactive(default_dir: str) -> str:
 
     while True:
 
-        user_input = input(f"\nEnter target directory path [default: '{default_dir}']: ").strip()
+        user_input = prompt(f"\nEnter target directory path [default: '{default_dir}']: ").strip()
 
         # Handle default choice (empty input) vs user input
         raw_path = default_dir if not user_input else user_input.strip("'\"")
@@ -224,7 +227,7 @@ def prompt_english_interactive():
     print("\n🌐 Is the audio language English?")
 
     while True:
-        is_eng_input = input(
+        is_eng_input = prompt(
             "\nEnter [Y/n] (default: Y): "
         ).strip().lower()
 
@@ -247,7 +250,7 @@ def prompt_task_interactive():
     print("  [2] Translate (Translate from original language to English SRT)")
 
     while True:
-        task_input = input(
+        task_input = prompt(
             "\nEnter choice [1/2] (default: 1): "
         ).strip()
 
@@ -269,7 +272,7 @@ def prompt_language_interactive():
     print("   Examples: 'fa' (Persian), 'es' (Spanish), 'auto' (Auto-detect)")
 
     while True:
-        lang_input = input(
+        lang_input = prompt(
             "\nEnter ISO language code [default: 'auto']: "
         ).strip().lower()
 
@@ -324,7 +327,7 @@ def prompt_model_interactive(is_english: bool, task: str = "transcribe", default
     print("---------------------------------------------")
 
     while True:
-        selection = input(f"\nEnter number or model key (default: [{default_model}]): ").strip()
+        selection = prompt(f"\nEnter number or model key (default: [{default_model}]): ").strip()
 
         # Handle empty input (press Enter) -> Return default
         if not selection:
@@ -360,7 +363,7 @@ def prompt_device_interactive(default_device: str = "cuda") -> str:
     print("  [2] cpu   (CPU Processing)")
 
     while True:
-        selection = input(f"\nEnter choice [1/2] (default: [{default_device}]): ").strip().lower()
+        selection = prompt(f"\nEnter choice [1/2] (default: [{default_device}]): ").strip().lower()
 
         if not selection:
             return default_device
@@ -381,7 +384,7 @@ def prompt_compute_type_interactive(default_compute: str = "int8") -> str:
     print(f"   Options: {', '.join(valid_computes)}")
 
     while True:
-        user_input = input(f"\nEnter compute precision type [default: '{default_compute}']: ").strip()
+        user_input = prompt(f"\nEnter compute precision type [default: '{default_compute}']: ").strip()
 
         if not user_input:
             return default_compute
@@ -400,7 +403,7 @@ def prompt_cooldown_interactive(default_cooldown: int | None) -> int | None:
     print("  Enter base cooldown in seconds (or press Enter to use model defaults)")
 
     while True:
-        user_input = input(f"\nEnter cooldown seconds [default: {default_str}]: ").strip()
+        user_input = prompt(f"\nEnter cooldown seconds [default: {default_str}]: ").strip()
 
         if not user_input:
             return default_cooldown
