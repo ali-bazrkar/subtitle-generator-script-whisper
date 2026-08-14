@@ -297,6 +297,9 @@ def prompt_language_and_task_interactive():
     task = prompt_task_interactive()
     lang = prompt_language_interactive()
 
+    if lang == "en":
+        return True, "en", "transcribe"
+
     return False, lang, task
 
 
