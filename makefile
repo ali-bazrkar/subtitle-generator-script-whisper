@@ -7,7 +7,7 @@ DEPS := faster-whisper huggingface-hub tqdm nvidia-cublas-cu12 nvidia-cudnn-cu12
 
 UV_PATH := $(shell command -v uv 2>/dev/null)
 
-.PHONY: all help run interactive setup clean
+.PHONY: help run interactive custom setup clean
 
 all: interactive
 
@@ -17,7 +17,7 @@ help:
 	@echo "Targets:"
 	@echo "  run          Run the script (auto-detects 'uv' or '.venv')"
 	@echo "  interactive  Launch the script's built-in interactive CLI - [RECOMMENDED]"
-# 	@echo "  prompt       Interactively select flags before running"
+	@echo "  custom       Interactively select flags before running"
 	@echo "  setup        Create .venv and install fallback dependencies"
 	@echo "  clean        Remove the .venv directory"
 	@echo ""
@@ -33,60 +33,60 @@ help:
 	@echo "                        NOTE: DO NOT use 'turbo' or English models for 'translate'"
 	@echo "  -i, --interactive     Launch script's built-in interactive wizard"
 
-# prompt:
-# 	@echo "=== Transcribe Script Flag Configurator ==="
-# 	@read -p "Target directory [./]: " target_dir; \
-# 	target_dir=$${target_dir:-./}; \
-# 	read -p "Select model size (e.g., turbo, base, large) [turbo]: " model; \
-# 	model=$${model:-turbo}; \
-# 	read -p "Select device (cuda/cpu) [cuda]: " device; \
-# 	device=$${device:-cuda}; \
-# 	read -p "Select compute type (int8/float16/int8_float16) [int8]: " compute; \
-# 	compute=$${compute:-int8}; \
-# 	read -p "Cooldown between files in seconds [Preset Default]: " cooldown; \
-# 	read -p "Language code (e.g., en) or auto [auto]: " language; \
-# 	language=$${language:-auto}; \
-# 	read -p "Task (transcribe/translate) [transcribe]: " task; \
-# 	task=$${task:-transcribe}; \
-# 	args="\"$$target_dir\" -m $$model -d $$device --compute-type $$compute -l $$language -t $$task"; \
-# 	if [ -n "$$cooldown" ]; then \
-# 		args="$$args -c $$cooldown"; \
-# 	fi; \
-# 	echo ""; \
-# 	echo "🚀 Executing with arguments: $$args"; \
-# 	$(MAKE) --no-print-directory run ARGS="$$args"
+custom:
+	@echo "=== Transcribe Script Flag Configurator ==="
+	@read -p "Target directory [./]: " target_dir; \
+	target_dir=$${target_dir:-./}; \
+	read -p "Select model size (e.g., turbo, base, large) [turbo]: " model; \
+	model=$${model:-turbo}; \
+	read -p "Select device (cuda/cpu) [cuda]: " device; \
+	device=$${device:-cuda}; \
+	read -p "Select compute type (int8/float16/int8_float16) [int8]: " compute; \
+	compute=$${compute:-int8}; \
+	read -p "Cooldown between files in seconds [Preset Default]: " cooldown; \
+	read -p "Language code (e.g., en) or auto [auto]: " language; \
+	language=$${language:-auto}; \
+	read -p "Task (transcribe/translate) [transcribe]: " task; \
+	task=$${task:-transcribe}; \
+	args="\"$$target_dir\" -m $$model -d $$device --compute-type $$compute -l $$language -t $$task"; \
+	if [ -n "$$cooldown" ]; then \
+		args="$$args -c $$cooldown"; \
+	fi; \
+	echo ""; \
+	echo "🚀 Executing with arguments: $$args"; \
+	$(MAKE) --no-print-directory run ARGS="$$args"
 
 run:
 ifdef UV_PATH
-	@echo "🚀 'uv' detected at $(UV_PATH). Running with uv..."
+	@echo "'uv' detected at $(UV_PATH). Running with uv..."
 	uv run $(SCRIPT) $(ARGS)
 else
-	@echo "⚠️ 'uv' not found. Falling back to .venv..."
+	@echo "⚠'uv' not found. Falling back to .venv..."
 	@$(MAKE) --no-print-directory setup
-	@echo "🚀 Running with standard venv..."
+	@echo "Running with standard venv..."
 	$(PYTHON) $(SCRIPT) $(ARGS)
 endif
 
 setup:
 ifndef UV_PATH
 	@if [ -d "$(VENV_DIR)" ]; then \
-		echo "✅ .venv already exists. Skipping setup."; \
+		echo ".venv already exists. Skipping setup."; \
 	else \
-		echo "📦 Creating Python virtual environment..."; \
+		echo "Creating Python virtual environment..."; \
 		python3 -m venv $(VENV_DIR); \
-		echo "⬇️ Installing dependencies..."; \
+		echo "⬇Installing dependencies..."; \
 		$(PIP) install --upgrade pip; \
 		$(PIP) install $(DEPS); \
-		echo "✅ Setup complete."; \
+		echo "Setup complete."; \
 	fi
 else
-	@echo "✅ 'uv' is installed. No .venv is needed."
+	@echo "'uv' is installed. No .venv is needed."
 endif
 
 interactive:
 	@$(MAKE) --no-print-directory run ARGS="-i $(ARGS)"
 
 clean:
-	@echo "🧹 Cleaning up..."
+	@echo "Cleaning up..."
 	rm -rf $(VENV_DIR)
-	@echo "✅ Clean complete."
+	@echo "Clean complete."
