@@ -130,6 +130,5 @@ interactive mode prepares the script for you by asking you questions, it handles
 <p align="center">
   <img src="https://github.com/user-attachments/assets/a55890d1-6fbf-4285-94f9-e8f5e7fd6d82" width="300">
   <img src="https://github.com/user-attachments/assets/b21c232b-c25d-4159-9dfe-bd4957c71843" width="300">
-  <img src="https://github.com/user-attachments/assets/b21c232b-c25d-4159-9dfe-bd4957c71843" width="300">
+  <img src="https://github.com/user-attachments/assets/c5e1c468-16bc-4060-ae61-de34d4ccb365" width="300">
 </p>
-
