@@ -1,6 +1,6 @@
 # subtitle-generator-script-whisper
 this repo contains a small vibe coded script for generating subtitles for videos i download across the internet.
-this was meant to remain a one-time script for my own personal uses however i decided to upload it here so i could access it anytime on any device later and also share it with my friends when needed. i added interactive mode and i probably will continue polishing it over time if anything interesting seemed to be needed to be added
+this was meant to remain a one-time script for my own personal uses however i decided to upload it here so i could access it anytime on any device later and also share it with my friends when needed. i added interactive mode and I'll probably continue polishing and add stuff i find interesting over time. 
 
 ## try-out:
 
@@ -128,7 +128,8 @@ interactive mode prepares the script for you by asking you questions, it handles
 ## screenshots:
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/135289f4-e4d0-4b16-bb0e-68b635d544eb" width="300">
-  <img src="https://github.com/user-attachments/assets/d9b84d9a-3d54-44f5-a51d-62dbaf2ecd0d" width="300">
-  <img src="https://github.com/user-attachments/assets/1bdddf9e-9599-45a6-b518-4d6ab57974ed" width="300">
+  <img src="https://github.com/user-attachments/assets/a55890d1-6fbf-4285-94f9-e8f5e7fd6d82" width="300">
+  <img src="https://github.com/user-attachments/assets/b21c232b-c25d-4159-9dfe-bd4957c71843" width="300">
+  <img src="https://github.com/user-attachments/assets/b21c232b-c25d-4159-9dfe-bd4957c71843" width="300">
 </p>
+
