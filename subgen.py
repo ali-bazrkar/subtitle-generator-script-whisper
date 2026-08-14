@@ -768,8 +768,10 @@ def main():
                         seg_end_ms = int(round(segment.end * 1000))
                         target_sec = max(pbar.n, min(seg_end_ms / 1000, total_seconds))
 
-                        # Update delta so tqdm speed/remaining estimates stay accurate
+                        remaining_room = max(0.0, round(total_seconds - pbar.n, 2))
                         delta = round(target_sec - pbar.n, 2)
+                        delta = min(delta, remaining_room)
+
                         if delta > 0:
                             pbar.update(delta)
 
