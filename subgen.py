@@ -28,6 +28,18 @@ YELLOW = "\033[93m"
 BLUE = "\033[94m"
 RESET = "\033[0m"
 
+VALID_LANGUAGES = {
+    "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo", "br",
+    "bs", "ca", "cs", "cy", "da", "de", "el", "en", "es", "et", "eu",
+    "fa", "fi", "fo", "fr", "gl", "gu", "ha", "haw", "he", "hi", "hr",
+    "ht", "hu", "hy", "id", "is", "it", "ja", "jw", "ka", "kk", "km",
+    "kn", "ko", "la", "lb", "ln", "lo", "lt", "lv", "mg", "mi", "mk",
+    "ml", "mn", "mr", "ms", "mt", "my", "ne", "nl", "nn", "no", "oc",
+    "pa", "pl", "ps", "pt", "ro", "ru", "sa", "sd", "si", "sk", "sl",
+    "sn", "so", "sq", "sr", "su", "sv", "sw", "ta", "te", "tg", "th",
+    "tk", "tl", "tr", "tt", "uk", "ur", "uz", "vi", "yi", "yo", "zh", "yue"
+}
+
 # OpenAI Whisper model preset mappings
 PRESETS = {
     # English-only Models
@@ -207,59 +219,82 @@ def prompt_directory_interactive(default_dir: str) -> str:
         return str(raw_path)
 
 
-def prompt_language_and_task_interactive():
-    """Prompts for English selection, and handles translate vs transcribe for non-English."""
+def prompt_english_interactive():
+    """Prompts whether the audio is English."""
     print("\n🌐 Is the audio language English?")
-    while True:
-        is_eng_input = input("\nEnter [Y/n] (default: Y): ").strip().lower()
 
-        if not is_eng_input or is_eng_input == 'y':
-            is_english = True
-            break
-        elif is_eng_input == 'n':
-            is_english = False
-            break
+    while True:
+        is_eng_input = input(
+            "\nEnter [Y/n] (default: Y): "
+        ).strip().lower()
+
+        if not is_eng_input or is_eng_input == "y":
+            return True
+        elif is_eng_input == "n":
+            return False
         else:
-            print(f"\n{RED}❌ Invalid input. Please enter 'Y' for Yes or 'n' for No.{RESET}")
+            print(
+                f"\n{RED}❌ Invalid input. "
+                f"Please enter 'Y' for Yes or 'n' for No.{RESET}"
+            )
+
+
+def prompt_task_interactive():
+    """Prompts for transcribe vs translate."""
+    print("\n-------------------------------------------------")
+    print("\n🗣️  Choose operation for non-English audio:")
+    print("  [1] Transcribe (Generate SRT in the original language)")
+    print("  [2] Translate (Translate from original language to English SRT)")
+
+    while True:
+        task_input = input(
+            "\nEnter choice [1/2] (default: 1): "
+        ).strip()
+
+        if not task_input or task_input == "1":
+            return "transcribe"
+        elif task_input == "2":
+            return "translate"
+        else:
+            print(
+                f"\n{RED}❌ Invalid choice. "
+                f"Please enter '1' or '2'.{RESET}"
+            )
+
+
+def prompt_language_interactive():
+    """Prompts for and validates the source language code."""
+    print("\n-------------------------------------------------")
+    print("\n🌍 Source Language Code:")
+    print("   Examples: 'fa' (Persian), 'es' (Spanish), 'auto' (Auto-detect)")
+
+    while True:
+        lang_input = input(
+            "\nEnter ISO language code [default: 'auto']: "
+        ).strip().lower()
+
+        if not lang_input or lang_input == "auto":
+            return "auto"
+        elif lang_input in VALID_LANGUAGES:
+            return lang_input
+        else:
+            print(
+                f"\n{RED}❌ Invalid language code. "
+                f"Please enter 'auto' or a valid ISO language code.{RESET}"
+            )
+
+
+def prompt_language_and_task_interactive():
+    """Prompts for language, task, and source language when needed."""
+    is_english = prompt_english_interactive()
 
     if is_english:
         return True, "en", "transcribe"
-    else:
 
-        print("\n-------------------------------------------------")
-        print("\n🗣️  Choose operation for non-English audio:")
-        print("  [1] Transcribe (Generate SRT in the original language)")
-        print("  [2] Translate (Translate from original language to English SRT)")
+    task = prompt_task_interactive()
+    lang = prompt_language_interactive()
 
-        while True:
-            task_input = input("\nEnter choice [1/2] (default: 1): ").strip()
-
-            if not task_input or task_input == "1":
-                task = "transcribe"
-                break
-            elif task_input == "2":
-                task = "translate"
-                break
-            else:
-                print(f"\n{RED}❌ Invalid choice. Please enter '1' or '2'.{RESET}")
-
-        print("\n-------------------------------------------------")
-        print("\n🌍 Source Language Code:")
-        print("   Examples: 'fa' (Persian), 'es' (Spanish), 'auto' (Auto-detect)")
-
-        while True:
-            lang_input = input("\nEnter ISO language code [default: 'auto']: ").strip().lower()
-
-            if not lang_input:
-                lang = "auto"
-                break
-            elif lang_input == "auto" or lang_input.isalpha():
-                lang = lang_input
-                break
-            else:
-                print(f"\n{RED}❌ Invalid format. Please enter a valid text ISO code or 'auto'.{RESET}")
-
-        return False, lang, task
+    return False, lang, task
 
 
 def prompt_model_interactive(is_english: bool, task: str = "transcribe", default_model: str = "turbo") -> str:
@@ -493,37 +528,128 @@ def resolve_model_and_cooldown(model_arg: str, cooldown_arg: int | None, script_
 def main():
     args = parse_args()
 
-    # --- NON-INTERACTIVE PRE-CHECKS ---
-    if not args.interactive:
-        # 1. CLI Turbo + Translate Conflict Check -> Prompt user for selection
-        if args.task == "translate" and args.model in ["turbo", "large-v3-turbo"]:
-            print(f"\n{YELLOW}⚠️  Warning: Whisper 'turbo' does not support translation tasks.{RESET}")
-            print("Please choose a compatible multilingual model:")
-
-            is_eng = (args.language == "en")
-            args.model = prompt_model_interactive(
-                is_english=is_eng,
-                task=args.task,
-                default_model="small"
-            )
-
-        # 2. Language + '.en' model mismatch check
-        if args.language not in ["en", "auto"] and args.model.endswith(".en"):
-            new_model = args.model.removesuffix(".en")
-            print(f"\n{YELLOW}⚠️  Warning: Non-English language '{args.language}' requested with English-only model '{args.model}'.{RESET}")
-            print(f"🔄 Automatically swapping to multilingual model '{new_model}'.\n")
-            args.model = new_model
-
     target_dir = args.target_dir
-    selected_device = args.device
-    selected_model = args.model
-    selected_lang = args.language
-    selected_task = args.task
-    selected_compute = args.compute_type
+    selected_device = args.device.strip().lower()
+
+    selected_model = args.model.strip()
+    model_key = selected_model.lower()
+    if model_key in PRESETS or model_key in ALIASES:
+        selected_model = model_key
+
+    selected_lang = args.language.strip().lower()
+    selected_task = args.task.strip().lower()
+    selected_compute = args.compute_type.strip().lower()
     selected_cooldown = args.cooldown
 
-    # Step-by-step interactive workflow when -i flag is set
-    if args.interactive:
+    # --- NON-INTERACTIVE PRE-CHECKS & FALLBACKS ---
+    if not args.interactive:
+        video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
+
+        # 0. Validate Target Directory & Video Presence
+        dir_path = Path(target_dir)
+        has_videos = False
+        if dir_path.is_dir():
+            has_videos = any(
+                p.is_file() and p.suffix.lower() in video_extensions
+                for p in dir_path.iterdir()
+            )
+
+        if not dir_path.is_dir() or not has_videos:
+            if not dir_path.is_dir():
+                print(f"\n{RED}❌ Error: Directory '{target_dir}' does not exist.{RESET}")
+            else:
+                print(f"\n{YELLOW}⚠️ Warning: No video files found in '{dir_path.resolve()}'.{RESET}")
+
+            target_dir = prompt_directory_interactive(target_dir)
+            print("\n====================================================")
+
+        # 1. Validate Language
+        if selected_lang != "auto" and selected_lang not in VALID_LANGUAGES:
+            print(
+                f"\n{RED}❌ Invalid language code: '{selected_lang}'. "
+                f"Please enter a valid Whisper language code.{RESET}"
+            )
+            selected_lang = prompt_language_interactive()
+            print("\n====================================================")
+
+        # 2. Validate Task
+        if selected_task not in ["transcribe", "translate"]:
+            print(
+                f"\n{RED}❌ Invalid task choice: '{selected_task}'. "
+                f"Please select 'transcribe' or 'translate'.{RESET}"
+            )
+            selected_task = prompt_task_interactive()
+            print("\n====================================================")
+
+        # 3. CLI Turbo + Translate Conflict Check
+        if selected_task == "translate" and selected_model in ["turbo", "large-v3-turbo"]:
+            print(
+                f"\n{YELLOW}⚠️ Warning: Whisper 'turbo' does not support "
+                f"translation tasks.{RESET}"
+            )
+            print("Please choose a compatible multilingual model:")
+
+            is_eng = selected_lang == "en"
+            selected_model = prompt_model_interactive(
+                is_english=is_eng,
+                task=selected_task,
+                default_model="small"
+            )
+            print("\n====================================================")
+
+        # 4. Language + '.en' model mismatch check
+        if selected_lang not in ["en", "auto"] and selected_model.endswith(".en"):
+            new_model = selected_model.removesuffix(".en")
+
+            print(
+                f"\n{YELLOW}⚠️ Warning: Non-English language "
+                f"'{selected_lang}' requested with English-only model "
+                f"'{selected_model}'.{RESET}"
+            )
+            print(
+                f"🔄 Automatically swapping to multilingual model "
+                f"'{new_model}'.\n"
+            )
+            selected_model = new_model
+            print("\n====================================================")
+
+        # 5. Validate Model Name / Preset / Path
+        resolved_key = ALIASES.get(selected_model, selected_model)
+        if (
+            resolved_key not in PRESETS
+            and not Path(selected_model).exists()
+            and "/" not in selected_model
+        ):
+            print(f"\n{RED}❌ Unrecognized model preset or path: '{selected_model}'.{RESET}")
+            is_eng = selected_lang == "en"
+            selected_model = prompt_model_interactive(
+                is_english=is_eng,
+                task=selected_task,
+                default_model="turbo"
+            )
+            print("\n====================================================")
+
+        # 6. Validate Compute Device
+        if selected_device not in ["cuda", "cpu"]:
+            print(f"\n{RED}❌ Invalid device specified: '{selected_device}'.{RESET}")
+            selected_device = prompt_device_interactive(default_device="cuda")
+            print("\n====================================================")
+
+        # 7. Validate Compute Type
+        valid_computes = ["int8", "float16", "int8_float16", "float32"]
+        if selected_compute not in valid_computes:
+            print(f"\n{RED}❌ Invalid compute precision type: '{selected_compute}'.{RESET}")
+            selected_compute = prompt_compute_type_interactive(default_compute="int8")
+            print("\n====================================================")
+
+        # 8. Validate Cooldown Value
+        if selected_cooldown is not None and selected_cooldown < 0:
+            print(f"\n{RED}❌ Cooldown value cannot be negative: {selected_cooldown}.{RESET}")
+            selected_cooldown = prompt_cooldown_interactive(default_cooldown=None)
+            print("\n====================================================")
+
+    # Step-by-step interactive workflow when -i flag is explicitly set
+    else:
         print("\n====================================================")
         print("       🎛️ Interactive Configuration Mode ")
         print("====================================================")
@@ -552,21 +678,13 @@ def main():
 
     folder_path = Path(target_dir)
 
-    # Secondary check for non-interactive execution mode
-    if not folder_path.is_dir():
-        print(f"{RED}❌ Error: '{target_dir}' is not a valid directory.{RESET}")
-        sys.exit(1)
-
+    # Populate the list of video files to process
     video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
     videos = [
         p
         for p in folder_path.iterdir()
         if p.is_file() and p.suffix.lower() in video_extensions
     ]
-
-    if not videos:
-        print(f"{YELLOW}⚠️ No video files found in {folder_path.resolve()}{RESET}")
-        sys.exit(0)
 
     print(f"📂 Found {len(videos)} video(s) in {folder_path.resolve()}")
 
