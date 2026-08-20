@@ -800,7 +800,7 @@ def main():
                 print()
 
         except KeyboardInterrupt:
-            print(f"{RED}🛑 Interrupted by user while processing '{video_path.name}'.{RESET}")
+            print(f"\n{RED}🛑 Interrupted by user while processing '{video_path.name}'.{RESET}")
             sys.exit(130)
         except Exception as e:
             failed_count += 1
